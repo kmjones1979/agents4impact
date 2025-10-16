@@ -206,8 +206,8 @@ Always provide helpful, accurate information and guide users to the appropriate 
             # In production, use Gemini function calling
             message_lower = user_message.lower()
             
-            # Check for ticket-related keywords
-            ticket_keywords = ['ticket', 'event', 'concert', 'show', 'venue', 'buy', 'purchase', 'available', 'festival', 'performance']
+            # Check for ticket-related keywords (including payment keywords)
+            ticket_keywords = ['ticket', 'event', 'concert', 'show', 'venue', 'buy', 'purchase', 'available', 'festival', 'performance', 'payment', 'pay', 'send', 'usdc', 'balance', 'wallet', 'complete', 'transaction', 'address', 'fund']
             if any(keyword in message_lower for keyword in ticket_keywords):
                 result = await self._route_to_agent("ticket", user_message)
                 if result.get("success"):

@@ -12,6 +12,13 @@ cd /Users/kevinjones/google/mcp-ticket-server && pkill -f "tsx watch src/server.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
+│                    ADK Web Interface                    │
+│            (Mobile-First City Explorer)                 │
+│                    Port: 5000                           │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
 │                  Orchestrator Agent                     │
 │              (High-Level Coordinator)                   │
 │                    Port: 8000                           │
@@ -23,17 +30,60 @@ cd /Users/kevinjones/google/mcp-ticket-server && pkill -f "tsx watch src/server.
 ┌───────────────┐        ┌───────────────┐  ┌──────────────┐
 │ BigQuery Agent│        │ Ticket Agent  │  │  Maps Agent  │
 │   Port: 8001  │        │  Port: 8002   │  │  Port: 8003  │
-└───────────────┘        └───────────────┘  └──────────────┘
+└───────────────┘        └───────┬───────┘  └──────────────┘
+                                 │
+                                 ▼
+                       ┌───────────────────┐
+                       │ MCP Ticket Server │
+                       │ (Event Tickets +  │
+                       │  USDC Payments)   │
+                       │   Port: 3000      │
+                       └───────────────────┘
 ```
 
 ## 🌟 Features
+
+### 🌆 ADK Web Interface (City Explorer)
+
+-   **Mobile-First Design**: Optimized for smartphones and tablets
+-   **Chat Interface**: Natural language interaction with the multi-agent system
+-   **Full-Screen Layout**: Uses 100% viewport width for maximum readability
+-   **Admin Panel**: View real-time agent status and health checks
+-   **Bottom Navigation**: Easy switching between Chat and Admin views
+-   **Responsive**: Works perfectly on desktop, tablet, and mobile devices
+-   **Modern UI**: Clean, gradient-based design with smooth animations
 
 ### Orchestrator Agent
 
 -   Coordinates between specialized agents
 -   Intelligently routes requests to appropriate agents
+-   Keyword-based routing (ticket, payment, maps, data queries)
 -   Aggregates and synthesizes multi-agent responses
 -   Provides unified interface for complex workflows
+
+### 🎫 Ticket Agent + MCP Server
+
+**Ticket Agent (Port 8002):**
+-   Natural language ticket purchasing
+-   Fuzzy event name matching (handles typos!)
+-   AI-powered payment completion with USDC
+-   Wallet balance checking
+-   Event browsing and discovery
+
+**MCP Ticket Server (Port 3000):**
+-   **Event Management**: List events, venues, and ticket inventory
+-   **Blockchain Payments**: USDC payments on Base Sepolia testnet
+-   **Payment Processing**: Create payment requests, verify transactions
+-   **Wallet Integration**: Agent can send USDC payments automatically
+-   **Express API**: RESTful endpoints for ticket operations
+-   **Real-time Status**: Check payment status and ticket confirmation
+
+**Example Event Types:**
+- 🎵 Concerts (Rock Legends, Summer Music Festival)
+- 🎭 Theater (Broadway Musical Night)
+- 💼 Conferences (Tech Conference 2025)
+
+**Pricing:** All tickets are $1 USDC for easy testing!
 
 ### BigQuery Agent
 
@@ -43,31 +93,26 @@ cd /Users/kevinjones/google/mcp-ticket-server && pkill -f "tsx watch src/server.
 -   Analyze query results with built-in intelligence
 -   Query cost and performance monitoring
 
-### Ticket Agent
-
--   Create and manage support tickets
--   Update ticket status and add notes
--   Search and filter tickets
--   Categorize tickets (bug, feature, question, incident)
--   Priority management (low, medium, high, critical)
-
 ### Maps Agent
 
 -   Geocode addresses to coordinates
 -   Reverse geocode coordinates to addresses
 -   Get directions between locations
 -   Calculate distances and travel times
--   Find nearby places
+-   Find nearby places (mock implementation)
 -   Generate static map URLs
 
 ## 📋 Prerequisites
 
--   Python 3.10 or higher
--   Google Cloud Project with:
+-   **Python 3.10 or higher**
+-   **Node.js 18+ and npm** (for MCP Ticket Server)
+-   **Google Cloud Project** with:
     -   Gemini API enabled
     -   BigQuery API enabled (for BigQuery agent)
     -   Maps API enabled (for Maps agent, optional)
--   Service account credentials (JSON key file)
+-   **Base Sepolia Testnet** (for blockchain payments):
+    -   USDC tokens (from https://faucet.circle.com/)
+    -   ETH for gas (from https://www.alchemy.com/faucets/base-sepolia)
 
 ## 🚀 Quick Start
 
@@ -113,21 +158,64 @@ GOOGLE_API_KEY=your-gemini-api-key
 
 For getting your API keys, see [GET_CREDENTIALS.md](GET_CREDENTIALS.md)
 
-### 3. Start All Agents
+### 3. Setup MCP Ticket Server
 
+```bash
+cd mcp-ticket-server
+npm install
+cd ..
+```
+
+Configure the blockchain wallet in `mcp-ticket-server/.env`:
+
+```env
+PAYMENT_WALLET_PRIVATE_KEY=your_private_key_here
+BASE_SEPOLIA_RPC_URL=https://base-sepolia.g.alchemy.com/v2/your-api-key
+```
+
+> **Note:** See [WALLET_SETUP.md](WALLET_SETUP.md) for detailed wallet configuration.
+
+### 4. Start All Services
+
+**Start MCP Ticket Server:**
+```bash
+cd mcp-ticket-server && npm run dev &
+```
+
+**Start All ADK Agents:**
 ```bash
 source venv/bin/activate
 ./scripts/start_all_agents.sh
 ```
 
-This starts all four agents on their respective ports:
+**Start Web Interface:**
+```bash
+python web_server.py &
+```
 
--   Orchestrator: http://localhost:8000
--   BigQuery Agent: http://localhost:8001
--   Ticket Agent: http://localhost:8002
--   Maps Agent: http://localhost:8003
+This starts all services:
 
-### 4. Test the System
+-   🌐 **Web Interface**: http://localhost:5000
+-   🎯 **Orchestrator**: http://localhost:8000
+-   📊 **BigQuery Agent**: http://localhost:8001
+-   🎫 **Ticket Agent**: http://localhost:8002
+-   🗺️ **Maps Agent**: http://localhost:8003
+-   🎟️ **MCP Ticket Server**: http://localhost:3000
+
+### 5. Use the City Explorer
+
+Open your browser to **http://localhost:5000**
+
+**Try these queries in the chat:**
+```
+What events are available?
+Buy a ticket for Rock Legends Concert
+Send $1 USDC to <payment_address>
+What's your USDC balance?
+Get directions to Madison Square Garden
+```
+
+### 6. Test via API (Optional)
 
 Run the example client:
 
@@ -141,14 +229,114 @@ Or access the interactive API documentation:
 -   http://localhost:8001/docs (BigQuery)
 -   http://localhost:8002/docs (Ticket)
 -   http://localhost:8003/docs (Maps)
+-   http://localhost:3000/health (MCP Server)
 
-### 5. Stop All Agents
+### 7. Stop All Services
 
 ```bash
+# Stop agents
 ./scripts/stop_all_agents.sh
+
+# Stop MCP server
+pkill -f "tsx watch src/server.ts"
+
+# Stop web server
+pkill -f "web_server.py"
 ```
 
 ## 💻 Usage Examples
+
+### Using the City Explorer Web Interface
+
+The City Explorer is a mobile-first web application for discovering events and exploring the city.
+
+**Access:** http://localhost:5000
+
+**Features:**
+- 💬 **Chat View**: Natural language interaction with all agents
+- ⚙️ **Admin View**: Real-time agent status monitoring
+
+**Example Conversations:**
+
+**Discover Events:**
+```
+User: What events are happening?
+Agent: Here are the available events:
+       🎫 Summer Music Festival 2025
+       📅 2025-07-15 at 18:00
+       📍 Hollywood Bowl
+       💵 $1 USDC
+       🎟️ 5000 tickets available
+       ...
+```
+
+**Buy Tickets:**
+```
+User: I want to buy a ticket for Broadway Musical Night
+Agent: 🎫 Ticket Reserved! USDC Payment Required
+       
+       💵 Payment Amount: $1.00 USDC
+       📬 Send USDC to: 0x8af5...
+       
+       🤖 TO COMPLETE PAYMENT:
+       Simply say: "Send $1 USDC to 0x8af5..."
+```
+
+**Complete Payment:**
+```
+User: Send $1 USDC to 0x8af5...
+Agent: ✅ USDC Payment Sent Successfully!
+       💵 Amount: $1 USDC
+       🔗 Transaction: 0xabc123...
+       🌐 View on Explorer: https://sepolia.basescan.org/tx/0xabc123...
+```
+
+**Check Balance:**
+```
+User: What's your USDC balance?
+Agent: 💰 Agent Wallet Balance
+       📬 Address: 0x9bDf...
+       💵 USDC Balance: $10.00
+       ⛽ ETH Balance: 0.05 ETH
+```
+
+### Using the MCP Ticket Server API
+
+The MCP server provides REST endpoints for ticket operations:
+
+**List Events:**
+```bash
+curl http://localhost:3000/mcp/tool/list_events \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+**Purchase Tickets:**
+```bash
+curl http://localhost:3000/mcp/tool/purchase_tickets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "eventId": "event-1",
+    "quantity": 2,
+    "customerEmail": "user@example.com",
+    "customerName": "John Doe"
+  }'
+```
+
+**Send Payment:**
+```bash
+curl http://localhost:3000/mcp/tool/send_payment \
+  -H "Content-Type: application/json" \
+  -d '{
+    "toAddress": "0x8af52793B08843D1D0f4ee36964fCe986e667836",
+    "amountUSD": "1.00"
+  }'
+```
+
+**Check Wallet Balance:**
+```bash
+curl http://localhost:3000/mcp/tool/get_balance
+```
 
 ### Using the Python Client
 

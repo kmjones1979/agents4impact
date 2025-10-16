@@ -171,29 +171,37 @@ Always provide clear pricing and guide users through the complete purchase flow.
             },
             {
                 "name": "send_payment",
-                "description": "Use this to COMPLETE PAYMENT for a ticket purchase. Send USDC to the payment address from a purchase_tickets response. Can also send USDC to any address on Base Sepolia.",
+                "description": "Use this to COMPLETE PAYMENT for a ticket purchase. If user just purchased a ticket and says 'send payment' or 'complete payment', this will AUTOMATICALLY find and pay the most recent pending ticket. You can also send USDC to a specific address by providing to_address and amount_usd.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "to_address": {
                             "type": "string",
-                            "description": "Payment address from ticket purchase (e.g., '0x8af5...')"
+                            "description": "OPTIONAL: Payment address. If not provided, will auto-fetch from most recent ticket purchase."
                         },
                         "amount_usd": {
                             "type": "string",
-                            "description": "Amount in USD from ticket purchase (e.g., '1.00')"
+                            "description": "OPTIONAL: Amount in USD. If not provided, will auto-fetch from most recent ticket purchase."
                         },
                         "memo": {
                             "type": "string",
                             "description": "Optional memo/note for the payment"
                         }
                     },
-                    "required": ["to_address", "amount_usd"]
+                    "required": []
                 }
             },
             {
                 "name": "get_wallet_balance",
                 "description": "Check the agent's wallet balance on Base Sepolia",
+                "parameters": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
+                "name": "get_wallet_address",
+                "description": "Get the agent's wallet address for funding. Use this when user asks 'what's your address', 'where do I send funds', or 'what's your wallet'.",
                 "parameters": {
                     "type": "object",
                     "properties": {}
@@ -289,15 +297,18 @@ Always provide clear pricing and guide users through the complete purchase flow.
                     payment_intent = result.get('paymentIntent', {})
                     blockchain = payment_intent.get('blockchain', {})
                     
+                    payment_address = blockchain.get('paymentAddress', 'N/A')
+                    amount = payment_intent.get('amount', 0)
+                    
                     message = f"""
 🎫 Ticket Reserved! USDC Payment Required
 
 Your tickets have been reserved. To complete your purchase:
 
-💵 Payment Amount: ${payment_intent.get('amount', 0):.2f} USDC
+💵 Payment Amount: ${amount:.2f} USDC
 
 📬 Send USDC to this address on Base Sepolia:
-{blockchain.get('paymentAddress', 'N/A')}
+{payment_address}
 
 🌐 Network: {blockchain.get('network', 'Base Sepolia')}
 🔗 Chain ID: {blockchain.get('chainId', 84532)}
@@ -307,11 +318,20 @@ Your tickets have been reserved. To complete your purchase:
 ⏰ Expires: {payment_intent.get('expiresAt', 'N/A')}
 🎟️ Payment Intent ID: {payment_intent.get('id', 'N/A')}
 
-📌 IMPORTANT:
-1. Send EXACTLY ${payment_intent.get('amount', 0):.2f} USDC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🤖 TO COMPLETE PAYMENT WITH AI AGENT:
+
+Simply say: "Send ${amount} USDC to {payment_address}"
+
+Or just: "Complete my payment" or "Send the payment"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 MANUAL PAYMENT:
+1. Send EXACTLY ${amount:.2f} USDC
 2. Send to the address above on Base Sepolia network
-3. Use the check_payment_status tool to verify your payment
-4. Get Base Sepolia testnet USDC from: https://faucet.circle.com/
+3. Get Base Sepolia testnet USDC from: https://faucet.circle.com/
 
 ✅ Your ticket will be automatically confirmed once the USDC transaction is detected!
 """
@@ -332,10 +352,37 @@ Your tickets have been reserved. To complete your purchase:
                 return self._call_mcp("get_my_tickets", parameters)
             
             elif tool_name == "send_payment":
+                # Validate parameters
+                to_address = parameters.get("to_address")
+                amount_usd = parameters.get("amount_usd")
+                
+                # If no address/amount provided, try to get the most recent pending payment
+                if not to_address or not amount_usd:
+                    print("[DEBUG] No payment details provided, fetching pending payment...")
+                    pending_result = self._call_mcp("get_pending_payment", {})
+                    
+                    if pending_result.get("success") and pending_result.get("paymentIntent"):
+                        payment_intent = pending_result["paymentIntent"]
+                        blockchain = payment_intent.get("blockchain", {})
+                        to_address = blockchain.get("paymentAddress")
+                        amount_usd = str(payment_intent.get("amount", 0))
+                        print(f"[DEBUG] Found pending payment: ${amount_usd} to {to_address}")
+                    else:
+                        return {
+                            "success": True,
+                            "result": """❌ No Pending Payments Found
+
+Please purchase a ticket first, then I can complete the payment!
+
+Or provide the payment details explicitly like this:
+"Send $1 USDC to 0x8af52793B08843D1D0f4ee36964fCe986e667836"
+"""
+                        }
+                
                 # Agent sends USDC payment
                 result = self._call_mcp("send_payment", {
-                    "toAddress": parameters.get("to_address"),
-                    "amountUSD": parameters.get("amount_usd"),
+                    "toAddress": to_address,
+                    "amountUSD": amount_usd,
                     "memo": parameters.get("memo", "")
                 })
                 
@@ -363,19 +410,78 @@ Your USDC payment has been confirmed on Base Sepolia blockchain!
                     result = response.json()
                     
                     if result.get("success"):
+                        wallet_address = result.get('address')
+                        usdc_balance = result.get('balanceUSDC', '0.00')
+                        eth_balance = result.get('balanceETH', '0.0')
+                        
                         result["message"] = f"""
 💰 Agent Wallet Balance
 
-📬 Address: {result.get('address')}
-💵 USDC Balance: ${result.get('balanceUSDC', '0.00')}
-⛽ ETH Balance (for gas): {result.get('balanceETH', '0.0')} ETH
+📬 Wallet Address: {wallet_address}
+
+💵 USDC Balance: ${usdc_balance}
+⛽ ETH Balance (for gas): {eth_balance} ETH
+
 🌐 Network: {result.get('network')}
 🔗 Chain ID: {result.get('chainId')}
 💎 USDC Contract: {result.get('usdcContract')}
 
-This wallet can send USDC payments for ticket purchases!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 TO FUND THIS WALLET:
+
+1. Get testnet USDC: https://faucet.circle.com/
+2. Get testnet ETH (for gas): https://www.alchemy.com/faucets/base-sepolia
+
+Send to: {wallet_address}
 """
                     return result
+                except Exception as e:
+                    return {"success": False, "error": str(e)}
+            
+            elif tool_name == "get_wallet_address":
+                # Get agent's wallet address for funding
+                try:
+                    response = requests.get(f"{self.mcp_server_url}/mcp/tool/get_balance", timeout=10)
+                    response.raise_for_status()
+                    result = response.json()
+                    
+                    if result.get("success"):
+                        wallet_address = result.get('address')
+                        
+                        return {
+                            "success": True,
+                            "result": f"""
+📬 Agent Wallet Address
+
+{wallet_address}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 Network: Base Sepolia (Chain ID: {result.get('chainId', 84532)})
+
+💰 TO FUND THIS WALLET:
+
+1️⃣ Get testnet USDC (for ticket payments):
+   https://faucet.circle.com/
+   
+   • Select "Base Sepolia" network
+   • Paste address: {wallet_address}
+   • Request USDC tokens
+
+2️⃣ Get testnet ETH (for gas fees):
+   https://www.alchemy.com/faucets/base-sepolia
+   
+   • Enter address: {wallet_address}
+   • Request ETH
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 After funding, check balance with: "What's your USDC balance?"
+"""
+                        }
+                    else:
+                        return {"success": False, "error": "Could not retrieve wallet address"}
                 except Exception as e:
                     return {"success": False, "error": str(e)}
             

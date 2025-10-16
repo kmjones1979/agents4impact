@@ -7,6 +7,7 @@ import express from "express";
 import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
 import { config } from "dotenv";
+import { ethers } from "ethers";
 import { events, venues, tickets, paymentIntents } from "./data.js";
 import { Ticket, PaymentIntent, PaymentResponse } from "./types.js";
 import {
@@ -324,6 +325,39 @@ app.post("/mcp/tool/get_my_tickets", (req, res) => {
         success: true,
         count: filteredTickets.length,
         tickets: filteredTickets,
+    });
+});
+
+// Get most recent pending payment
+app.post("/mcp/tool/get_pending_payment", (req, res) => {
+    // Find the most recent pending payment intent
+    let mostRecentPending: any = null;
+    let mostRecentTime = 0;
+
+    paymentIntents.forEach((paymentIntent, id) => {
+        if (paymentIntent.status === "pending") {
+            const createdAt = new Date(paymentIntent.createdAt).getTime();
+            if (createdAt > mostRecentTime) {
+                mostRecentTime = createdAt;
+                mostRecentPending = {
+                    id,
+                    ...paymentIntent,
+                };
+            }
+        }
+    });
+
+    if (!mostRecentPending) {
+        return res.json({
+            success: false,
+            error: "No pending payments found. Please purchase a ticket first.",
+        });
+    }
+
+    // Return payment details
+    res.json({
+        success: true,
+        paymentIntent: mostRecentPending,
     });
 });
 
