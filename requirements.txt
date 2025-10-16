@@ -1,0 +1,15 @@
+# Google AI and Cloud dependencies
+google-genai>=0.3.0
+google-cloud-aiplatform>=1.60.0
+google-cloud-bigquery>=3.20.0
+google-auth>=2.30.0
+
+# Web framework for A2A protocol
+fastapi>=0.110.0
+uvicorn>=0.29.0
+
+# Utilities
+pydantic>=2.7.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+

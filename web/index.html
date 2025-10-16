@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+        <title>City Explorer</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="app-container">
+            <!-- Main Chat View -->
+            <div class="view active" id="chat-view">
+                <!-- Header -->
+                <header class="app-header">
+                    <h1>🌆 City Explorer</h1>
+                    <p>Discover events & public spaces</p>
+                </header>
+
+                <!-- Chat Messages -->
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message assistant">
+                        <div class="message-bubble">
+                            <div class="message-content">
+                                👋 Hey! I'm your city guide!
+                                <br><br>
+                                I can help you:
+                                <br>
+                                🎫 Find events & shows
+                                <br>
+                                🏛️ Discover public spaces
+                                <br>
+                                🗺️ Get directions
+                                <br>
+                                📊 Explore city data
+                                <br><br>
+                                What would you like to explore?
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="chat-input-container">
+                    <input
+                        type="text"
+                        id="chat-input"
+                        placeholder="What are you looking for?"
+                        autocomplete="off"
+                    />
+                    <button id="send-button">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin View -->
+            <div class="view" id="admin-view">
+                <!-- Header -->
+                <header class="app-header">
+                    <h1>⚙️ Admin Panel</h1>
+                    <p>System status & diagnostics</p>
+                </header>
+
+                <!-- Agent Status -->
+                <div class="admin-content">
+                    <div class="status-card">
+                        <h3>🎯 Orchestrator</h3>
+                        <p class="port">Port 8000</p>
+                        <div class="status-indicator" id="status-orchestrator">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Checking...</span>
+                        </div>
+                    </div>
+
+                    <div class="status-card">
+                        <h3>🎫 Ticket Agent</h3>
+                        <p class="port">Port 8002</p>
+                        <div class="status-indicator" id="status-ticket">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Checking...</span>
+                        </div>
+                    </div>
+
+                    <div class="status-card">
+                        <h3>🗺️ Maps Agent</h3>
+                        <p class="port">Port 8003</p>
+                        <div class="status-indicator" id="status-maps">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Checking...</span>
+                        </div>
+                    </div>
+
+                    <div class="status-card">
+                        <h3>📊 BigQuery Agent</h3>
+                        <p class="port">Port 8001</p>
+                        <div class="status-indicator" id="status-bigquery">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Checking...</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>ℹ️ System Info</h3>
+                        <p>All agents communicate via A2A protocol</p>
+                        <p>Status updates every 10 seconds</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav">
+                <button class="nav-button active" data-view="chat">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Chat</span>
+                </button>
+                <button class="nav-button" data-view="admin">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m5.196-15.196l-4.242 4.242m-5.908 5.908l-4.242 4.242m15.196 0l-4.242-4.242m-5.908-5.908l-4.242-4.242"></path>
+                    </svg>
+                    <span>Admin</span>
+                </button>
+            </nav>
+        </div>
+
+        <script src="app.js"></script>
+    </body>
+</html>

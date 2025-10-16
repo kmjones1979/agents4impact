@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Agent Connection Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        .test { margin: 10px 0; padding: 10px; background: #2a2a2a; }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .info { color: #0af; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Agent Connection Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+
+        async function testAgent(name, url) {
+            log(`Testing ${name} at ${url}...`, 'info');
+            try {
+                const response = await fetch(`${url}/health`);
+                const data = await response.json();
+                log(`✅ ${name}: ${JSON.stringify(data)}`, 'success');
+            } catch (error) {
+                log(`❌ ${name}: ${error.message}`, 'error');
+                log(`   Full error: ${error}`, 'error');
+            }
+        }
+
+        async function runTests() {
+            log('Starting connection tests...', 'info');
+            log('', 'info');
+            
+            await testAgent('Orchestrator', 'http://localhost:8000');
+            await testAgent('BigQuery Agent', 'http://localhost:8001');
+            await testAgent('Ticket Agent', 'http://localhost:8002');
+            await testAgent('Maps Agent', 'http://localhost:8003');
+            
+            log('', 'info');
+            log('Tests complete!', 'info');
+        }
+
+        runTests();
+    </script>
+</body>
+</html>
+

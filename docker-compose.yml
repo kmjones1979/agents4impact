@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  bigquery-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bigquery-agent
+    environment:
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+    volumes:
+      - ${GOOGLE_APPLICATION_CREDENTIALS}:/app/credentials.json:ro
+    ports:
+      - "8001:8001"
+    command: python a2a_server.py --agent bigquery --port 8001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ticket-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ticket-agent
+    environment:
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+    volumes:
+      - ${GOOGLE_APPLICATION_CREDENTIALS}:/app/credentials.json:ro
+    ports:
+      - "8002:8002"
+    command: python a2a_server.py --agent ticket --port 8002
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  maps-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: maps-agent
+    environment:
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+      - MAPS_API_KEY=${MAPS_API_KEY}
+    volumes:
+      - ${GOOGLE_APPLICATION_CREDENTIALS}:/app/credentials.json:ro
+    ports:
+      - "8003:8003"
+    command: python a2a_server.py --agent maps --port 8003
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  orchestrator-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orchestrator-agent
+    environment:
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+      - BIGQUERY_AGENT_PORT=8001
+      - TICKET_AGENT_PORT=8002
+      - MAPS_AGENT_PORT=8003
+    volumes:
+      - ${GOOGLE_APPLICATION_CREDENTIALS}:/app/credentials.json:ro
+    ports:
+      - "8000:8000"
+    command: python a2a_server.py --agent orchestrator --port 8000
+    depends_on:
+      - bigquery-agent
+      - ticket-agent
+      - maps-agent
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  default:
+    name: adk-a2a-network
+
