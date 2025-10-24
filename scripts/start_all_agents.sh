@@ -64,3 +64,4 @@ echo "To stop all agents, run: ./scripts/stop_all_agents.sh"
 echo ""
 echo "Try the example client: python client_example.py"
 
+

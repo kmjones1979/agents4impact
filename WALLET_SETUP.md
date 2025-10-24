@@ -414,3 +414,4 @@ Your agent now has:
 3. Test agent-initiated payments
 
 🚀 **Happy ticket selling with USDC!**
+

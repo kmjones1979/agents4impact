@@ -15,3 +15,4 @@ Place your Google Cloud service account JSON key file here.
 
 ⚠️ **Security Note**: This directory is in .gitignore - credentials won't be committed to git.
 
+

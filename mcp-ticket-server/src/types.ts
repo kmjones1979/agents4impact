@@ -77,3 +77,4 @@ export interface PaymentResponse {
     paymentIntent?: PaymentIntent;
     error?: string;
 }
+
